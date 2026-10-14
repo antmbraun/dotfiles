@@ -1,5 +1,10 @@
 onboarding = false
 
+[[keys.command]]
+key = "prefix+shift+b"
+type = "shell"
+command = "$HOME/dotfiles/herdr/toggle-browser.sh"
+
 [ui]
 status_indicators = "dots"
 agent_panel_sort = "priority"
@@ -26,6 +31,7 @@ delivery = "terminal"
 delay_seconds = 3
 
 [experimental]
+kitty_graphics = true
 pane_history = true
 
 [theme]
