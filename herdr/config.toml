@@ -1,0 +1,43 @@
+onboarding = false
+
+[ui]
+status_indicators = "dots"
+agent_panel_sort = "priority"
+hide_tab_bar_when_single_tab = true
+show_agent_labels_on_pane_borders = true
+prompt_new_tab_name = false
+sidebar_width = 36
+sidebar_min_width = 30
+sidebar_max_width = 50
+tab_bar_right = [
+  { type = "zoom" },
+  { type = "datetime", format = "%H:%M" },
+]
+tab_bar_right_separator = " · "
+
+[ui.sidebar.spaces]
+row_gap = 1
+
+[ui.sidebar.agents]
+row_gap = 1
+
+[ui.toast]
+delivery = "terminal"
+delay_seconds = 3
+
+[experimental]
+pane_history = true
+
+[theme]
+name = "tokyo-night"
+auto_switch = false
+
+[theme.custom]
+text      = "#ffffff"
+subtext0  = "#e6eaff"
+overlay1  = "#d0d6f5"
+overlay0  = "#b8c0e8"
+selection_bg  = "#33467c"
+active_row_bg = "#292e42"
+surface1  = "#7a85b8"
+surface0  = "#5a6390"
