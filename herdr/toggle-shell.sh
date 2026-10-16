@@ -7,6 +7,15 @@ export PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/herdr-toggle-shell"
 mkdir -p "$STATE_DIR"
 
+# `toggle-shell.sh --open <pane_id>`: open a shell next to that pane without focusing it (used by the space-shell plugin).
+if [ "${1:-}" = "--open" ]; then
+  info="$(herdr pane get "$2")"
+  tab="$(jq -r '.result.pane.tab_id' <<<"$info")"
+  cwd="$(jq -r '.result.pane.foreground_cwd // .result.pane.cwd' <<<"$info")"
+  herdr pane split --pane "$2" --direction right --cwd "$cwd" --no-focus | jq -r '.result.pane.pane_id' >"$STATE_DIR/${tab//:/_}"
+  exit 0
+fi
+
 current="$(herdr pane current)"
 pane="$(jq -r '.result.pane.pane_id' <<<"$current")"
 tab="$(jq -r '.result.pane.tab_id' <<<"$current")"

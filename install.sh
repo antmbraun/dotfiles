@@ -19,5 +19,7 @@ link vimrc .vimrc
 link herdr/config.toml .config/herdr/config.toml
 
 if command -v herdr >/dev/null 2>&1; then
-  herdr plugin link "$DIR/herdr/plugins/sort-spaces" >/dev/null && echo "Linked herdr plugin sort-spaces"
+  for plugin in sort-spaces space-shell; do
+    herdr plugin link "$DIR/herdr/plugins/$plugin" >/dev/null && echo "Linked herdr plugin $plugin"
+  done
 fi

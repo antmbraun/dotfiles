@@ -1,0 +1,10 @@
+id = "antmbraun.space-shell"
+name = "Space shell"
+version = "0.1.0"
+min_herdr_version = "0.9.3"
+description = "Open a shell split in every new space"
+platforms = ["linux", "macos"]
+
+[[events]]
+on = "workspace.created"
+command = ["bash", "space-shell.sh"]
