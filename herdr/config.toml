@@ -3,7 +3,7 @@ onboarding = false
 [[keys.command]]
 key = "prefix+shift+l"
 type = "shell"
-command = "$HOME/dotfiles/herdr/toggle-lazygit.sh"
+command = "$HOME/dotfiles/herdr/toggle-shell.sh"
 
 [[keys.command]]
 key = "prefix+shift+a"
