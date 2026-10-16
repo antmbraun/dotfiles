@@ -1,6 +1,11 @@
 onboarding = false
 
 [[keys.command]]
+key = "prefix+shift+l"
+type = "shell"
+command = "$HOME/dotfiles/herdr/toggle-lazygit.sh"
+
+[[keys.command]]
 key = "prefix+shift+a"
 type = "shell"
 command = "$HOME/dotfiles/herdr/plugins/sort-spaces/sort-spaces.sh"
