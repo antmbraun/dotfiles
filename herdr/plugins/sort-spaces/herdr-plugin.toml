@@ -1,0 +1,23 @@
+id = "antmbraun.sort-spaces"
+name = "Sort spaces"
+version = "0.1.0"
+min_herdr_version = "0.9.3"
+description = "Keep spaces sorted alphabetically"
+platforms = ["linux", "macos"]
+
+[[startup]]
+command = ["bash", "sort-spaces.sh"]
+
+[[events]]
+on = "workspace.created"
+command = ["bash", "sort-spaces.sh"]
+
+[[events]]
+on = "workspace.renamed"
+command = ["bash", "sort-spaces.sh"]
+
+[[actions]]
+id = "sort"
+title = "Sort spaces alphabetically"
+contexts = ["global"]
+command = ["bash", "sort-spaces.sh"]

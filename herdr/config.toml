@@ -1,9 +1,9 @@
 onboarding = false
 
 [[keys.command]]
-key = "prefix+shift+b"
+key = "prefix+shift+a"
 type = "shell"
-command = "$HOME/dotfiles/herdr/toggle-browser.sh"
+command = "$HOME/dotfiles/herdr/plugins/sort-spaces/sort-spaces.sh"
 
 [ui]
 status_indicators = "dots"
@@ -31,7 +31,6 @@ delivery = "terminal"
 delay_seconds = 3
 
 [experimental]
-kitty_graphics = true
 pane_history = true
 
 [theme]
