@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# On workspace.created, split a shell to the right of the new space's first pane.
+# On workspace.created, build the shell + status board layout around the new space's first pane.
 set -euo pipefail
 export PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
 
@@ -17,7 +17,5 @@ for _ in 1 2 3 4 5 6 7 8 9 10; do
 done
 [ -n "$root" ] || { echo "no pane found in $ws" >&2; exit 1; }
 
-# Don't add a second shell if the space already started with a split (e.g. restored or scripted layouts).
-[ "$(herdr pane list --workspace "$ws" | jq '.result.panes | length')" -eq 1 ] || exit 0
-
-exec "$HOME/dotfiles/herdr/toggle-shell.sh" --open "$root"
+# Skips spaces that already started with a split (e.g. restored or scripted layouts).
+exec "$HOME/dotfiles/herdr/apply-layout.sh" "$root"

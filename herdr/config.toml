@@ -6,6 +6,11 @@ type = "shell"
 command = "$HOME/dotfiles/herdr/toggle-shell.sh"
 
 [[keys.command]]
+key = "prefix+shift+s"
+type = "shell"
+command = "$HOME/dotfiles/herdr/apply-layout.sh"
+
+[[keys.command]]
 key = "prefix+shift+a"
 type = "shell"
 command = "$HOME/dotfiles/herdr/plugins/sort-spaces/sort-spaces.sh"
