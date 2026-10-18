@@ -18,6 +18,7 @@ link() {
 link vimrc .vimrc
 link herdr/config.toml .config/herdr/config.toml
 link claude/statusline-command.sh .claude/statusline-command.sh
+link ghostty/config .config/ghostty/config
 
 # Source the claude-personal alias from .zshrc (zshrc itself stays machine-local).
 source_line="source \"$DIR/zsh/claude-accounts.zsh\""

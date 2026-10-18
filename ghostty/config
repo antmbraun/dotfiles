@@ -1,0 +1,3 @@
+# Raise faint text (e.g. Claude Code's grey hints) to a readable contrast ratio.
+# 1 = off; 4.5 is the WCAG AA level for normal text.
+minimum-contrast = 4.5
