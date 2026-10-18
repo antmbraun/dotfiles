@@ -58,10 +58,16 @@ heat() {
 
 parts=()
 
-# --- model + signed-in account -----------------------------------------------
+# --- model -------------------------------------------------------------------
 parts+=("${NAME}${B}${model}${R}")
 
-account=$(jq -r '.oauthAccount.emailAddress // empty' "${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json" 2>/dev/null)
+# --- account: which login this session uses (CLAUDE_CONFIG_DIR picks it) -----
+if [ -n "$CLAUDE_CONFIG_DIR" ]; then
+  account_file="$CLAUDE_CONFIG_DIR/.claude.json"
+else
+  account_file="$HOME/.claude.json"
+fi
+account=$(jq -r '.oauthAccount.emailAddress // empty' "$account_file" 2>/dev/null)
 [ -n "$account" ] && parts+=("${DIM}${account}${R}")
 
 # --- context window: eighth-block bar for sub-cell precision -----------------
