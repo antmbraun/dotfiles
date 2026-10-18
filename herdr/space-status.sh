@@ -34,8 +34,16 @@ refresh_gh() {
 }
 
 while true; do
-  cwd="$(herdr pane get "$MAIN_PANE" 2>/dev/null | jq -r '.result.pane.foreground_cwd // .result.pane.cwd // empty')"
+  pane="$(herdr pane get "$MAIN_PANE" 2>/dev/null)"
+  cwd="$(jq -r '.result.pane.foreground_cwd // .result.pane.cwd // empty' <<<"$pane")"
   [ -n "$cwd" ] || exit 0 # main pane is gone; close with it
+  # A Claude session's statusline records its real working dir (e.g. after entering a worktree).
+  session="$(jq -r 'select(.result.pane.agent == "claude") | .result.pane.agent_session.value // empty' <<<"$pane")"
+  session_cwd_file="${XDG_STATE_HOME:-$HOME/.local/state}/claude-session-cwd/$session"
+  if [ -n "$session" ] && [ -f "$session_cwd_file" ]; then
+    session_cwd="$(cat "$session_cwd_file")"
+    [ -d "$session_cwd" ] && cwd="$session_cwd"
+  fi
   root="$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)"
 
   out=""

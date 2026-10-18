@@ -11,9 +11,18 @@ five=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 week=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // empty')
 cost=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
+session=$(echo "$input" | jq -r '.session_id // empty')
 
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/claude-statusline"
 mkdir -p "$CACHE_DIR"
+
+# Record the session's working dir for herdr's space-status board: herdr only
+# sees the claude process's launch dir, which misses worktree switches.
+if [ -n "$HERDR_PANE_ID" ] && [ -n "$session" ] && [ -n "$cwd" ]; then
+  CWD_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/claude-session-cwd"
+  mkdir -p "$CWD_DIR"
+  printf '%s\n' "$cwd" > "$CWD_DIR/$session"
+fi
 
 # cached <key> <ttl-seconds> <cmd...>: print the last cached result immediately
 # and, once it is older than ttl, refresh it in the background. gh and docker
@@ -60,15 +69,15 @@ heat() {
 
 parts=()
 
-# --- model -------------------------------------------------------------------
-parts+=("${NAME}${B}${model}${R}")
-
 # --- account: which login this session uses (CLAUDE_CONFIG_DIR picks it) -----
 case "$CLAUDE_CONFIG_DIR" in
   "" | "$HOME/.claude") parts+=("${WORK_C}${B}work${R}") ;;
   *-personal)           parts+=("${PERSONAL_C}${B}personal${R}") ;;
   *)                    parts+=("${B}$(basename "$CLAUDE_CONFIG_DIR")${R}") ;;
 esac
+
+# --- model -------------------------------------------------------------------
+parts+=("${NAME}${B}${model}${R}")
 
 # --- context window: eighth-block bar for sub-cell precision -----------------
 if [ -n "$ctx" ]; then
@@ -123,7 +132,7 @@ if [ -n "$cwd" ]; then
     pr=$(cached "pr:$common:$branch" 300 sh -c 'cd "$1" && gh pr view --json number -q .number' _ "$cwd")
     [ -n "$pr" ] && pr=" ${DIM}#${R}${BRANCH_C}${pr}${R}"
 
-    parts+=("${B}${repo}${R} ${DIM}⎇ ${R}${BRANCH_C}${branch}${R}${dirty}${sync}${pr}")
+    parts+=("📁 ${B}${repo}${R} ${DIM}⎇ ${R}${BRANCH_C}${branch}${R}${dirty}${sync}${pr}")
 
     # --- ddev: only for repos that have a DDEV project ------------------------
     top=$(g rev-parse --show-toplevel)
@@ -136,6 +145,9 @@ if [ -n "$cwd" ]; then
         parts+=("${RED}○${R} ${DIM}ddev${R}")
       fi
     fi
+  else
+    # Not a git repo: still show where the session is.
+    parts+=("📁 ${B}$(basename "$cwd")${R}")
   fi
 fi
 
