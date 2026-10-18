@@ -58,8 +58,11 @@ heat() {
 
 parts=()
 
-# --- model -------------------------------------------------------------------
+# --- model + signed-in account -----------------------------------------------
 parts+=("${NAME}${B}${model}${R}")
+
+account=$(jq -r '.oauthAccount.emailAddress // empty' "${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json" 2>/dev/null)
+[ -n "$account" ] && parts+=("${DIM}${account}${R}")
 
 # --- context window: eighth-block bar for sub-cell precision -----------------
 if [ -n "$ctx" ]; then
