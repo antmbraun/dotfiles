@@ -34,7 +34,7 @@ cached() {
 
 # --- palette (respects NO_COLOR) ---------------------------------------------
 if [ -n "$NO_COLOR" ]; then
-  R= B= DIM= SEP_C= NAME= GREEN= YELLOW= RED= BRANCH_C=
+  R= B= DIM= SEP_C= NAME= GREEN= YELLOW= RED= BRANCH_C= WORK_C= PERSONAL_C=
 else
   R=$'\033[0m'      ; B=$'\033[1m'
   DIM=$'\033[2m'
@@ -44,6 +44,8 @@ else
   YELLOW=$'\033[38;5;179m'
   RED=$'\033[38;5;203m'
   SEP_C=$'\033[38;5;240m'
+  WORK_C=$'\033[38;5;80m'                 # teal
+  PERSONAL_C=$'\033[38;5;216m'            # peach
 fi
 
 SEP="${SEP_C}  ${DIM}·${R}${SEP_C}  ${R}"
@@ -62,13 +64,11 @@ parts=()
 parts+=("${NAME}${B}${model}${R}")
 
 # --- account: which login this session uses (CLAUDE_CONFIG_DIR picks it) -----
-if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-  account_file="$CLAUDE_CONFIG_DIR/.claude.json"
-else
-  account_file="$HOME/.claude.json"
-fi
-account=$(jq -r '.oauthAccount.emailAddress // empty' "$account_file" 2>/dev/null)
-[ -n "$account" ] && parts+=("${DIM}${account}${R}")
+case "$CLAUDE_CONFIG_DIR" in
+  "" | "$HOME/.claude") parts+=("${WORK_C}${B}work${R}") ;;
+  *-personal)           parts+=("${PERSONAL_C}${B}personal${R}") ;;
+  *)                    parts+=("${B}$(basename "$CLAUDE_CONFIG_DIR")${R}") ;;
+esac
 
 # --- context window: eighth-block bar for sub-cell precision -----------------
 if [ -n "$ctx" ]; then
