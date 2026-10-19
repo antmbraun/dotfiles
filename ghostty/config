@@ -1,3 +1,11 @@
 # Raise faint text (e.g. Claude Code's grey hints) to a readable contrast ratio.
 # 1 = off; 4.5 is the WCAG AA level for normal text.
 minimum-contrast = 4.5
+
+# Monaspace Neon: GitHub's neutral, evenly spaced coding font.
+# Install: brew install --cask font-monaspace
+font-family = "Monaspace Neon"
+font-size = 14
+
+# Colors from the TokyoNight theme, matching herdr.
+theme = TokyoNight

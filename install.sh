@@ -20,11 +20,18 @@ link herdr/config.toml .config/herdr/config.toml
 link claude/statusline-command.sh .claude/statusline-command.sh
 link ghostty/config .config/ghostty/config
 
-# Source the claude-personal alias from .zshrc (zshrc itself stays machine-local).
-source_line="source \"$DIR/zsh/claude-accounts.zsh\""
-if ! grep -qF "$source_line" "$HOME/.zshrc" 2>/dev/null; then
-  printf '\n%s\n' "$source_line" >>"$HOME/.zshrc"
-  echo "Added claude-accounts.zsh to ~/.zshrc"
+# Source the zsh snippets from .zshrc (zshrc itself stays machine-local).
+# colors.zsh goes last: syntax highlighting must load after everything else.
+for snippet in claude-accounts.zsh colors.zsh; do
+  source_line="source \"$DIR/zsh/$snippet\""
+  if ! grep -qF "$source_line" "$HOME/.zshrc" 2>/dev/null; then
+    printf '\n%s\n' "$source_line" >>"$HOME/.zshrc"
+    echo "Added $snippet to ~/.zshrc"
+  fi
+done
+
+if command -v brew >/dev/null 2>&1 && ! brew list zsh-syntax-highlighting >/dev/null 2>&1; then
+  brew install zsh-syntax-highlighting
 fi
 
 # Two Claude accounts: work in ~/.claude, personal in ~/.claude-personal.
