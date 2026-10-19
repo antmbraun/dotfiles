@@ -12,6 +12,10 @@ bold=$'\e[1m' dim=$'\e[2m' green=$'\e[32m' yellow=$'\e[33m' red=$'\e[31m' cyan=$
 
 pr_line="" pr_number="" last_gh=0 last_key=""
 
+# Re-exec when this script is edited, so running boards pick up changes.
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+self_mtime="$(stat -f %m "$SELF")"
+
 # Pantheon site comes from the repo's ddev provider config, e.g. "project: b2b-mb.live" -> b2b-mb.
 pantheon_site() {
   sed -nE 's/^[[:space:]]*project:[[:space:]]*([a-z0-9-]+)\.[a-z]+[[:space:]]*$/\1/p' "$1/.ddev/providers/pantheon.yaml" 2>/dev/null | head -1
@@ -81,4 +85,5 @@ while true; do
 
   printf '\e[H\e[2J%b' "$out"
   sleep "$GIT_EVERY"
+  [ "$(stat -f %m "$SELF" 2>/dev/null)" = "$self_mtime" ] || exec bash "$SELF" "$MAIN_PANE"
 done
