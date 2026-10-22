@@ -18,13 +18,15 @@ command = "$HOME/dotfiles/herdr/plugins/sort-spaces/sort-spaces.sh"
 [ui]
 status_indicators = "dots"
 agent_panel_sort = "priority"
-hide_tab_bar_when_single_tab = true
+hide_tab_bar_when_single_tab = false
 show_agent_labels_on_pane_borders = true
 prompt_new_tab_name = false
 sidebar_width = 36
 sidebar_min_width = 30
 sidebar_max_width = 50
+# Claude usage: today's and this month's spend plus each account's 5h/7d plan usage.
 tab_bar_right = [
+  { type = "command", command = "$HOME/dotfiles/herdr/usage.sh", interval_seconds = 60, timeout_seconds = 30 },
   { type = "zoom" },
   { type = "datetime", format = "%H:%M" },
 ]
@@ -32,6 +34,12 @@ tab_bar_right_separator = " · "
 
 [ui.sidebar.spaces]
 row_gap = 1
+# $last_prompt is reported by ~/dotfiles/claude/hooks/herdr-last-prompt.sh on every Claude prompt.
+rows = [
+  ["state_icon", "workspace"],
+  ["branch", "git_status"],
+  [{ token = "$last_prompt", dim = true }],
+]
 
 [ui.sidebar.agents]
 row_gap = 1

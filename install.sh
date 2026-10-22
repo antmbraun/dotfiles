@@ -47,6 +47,14 @@ for claude_dir in "${claude_dirs[@]}"; do
     jq '.statusLine = {type: "command", command: "bash ~/.claude/statusline-command.sh"}' "$settings" >"$tmp" && mv "$tmp" "$settings"
     echo "Set statusLine in $settings"
   fi
+
+  # Show each prompt under its space in herdr's sidebar.
+  hook="bash $DIR/claude/hooks/herdr-last-prompt.sh"
+  if command -v jq >/dev/null 2>&1 && ! jq -e --arg h "$hook" '[.hooks.UserPromptSubmit[]?.hooks[]?.command] | index($h)' "$settings" >/dev/null 2>&1; then
+    tmp="$(mktemp)"
+    jq --arg h "$hook" '.hooks.UserPromptSubmit += [{hooks: [{type: "command", command: $h}]}]' "$settings" >"$tmp" && mv "$tmp" "$settings"
+    echo "Added UserPromptSubmit hook in $settings"
+  fi
 done
 
 if command -v herdr >/dev/null 2>&1; then

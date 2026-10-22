@@ -24,6 +24,14 @@ if [ -n "$HERDR_PANE_ID" ] && [ -n "$session" ] && [ -n "$cwd" ]; then
   printf '%s\n' "$cwd" > "$CWD_DIR/$session"
 fi
 
+# Record account-wide plan usage for herdr's tab bar (herdr/usage.sh): only a
+# Claude session sees it, and the tab bar shows it everywhere.
+if [ -n "$five$week" ]; then
+  USAGE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/claude-usage"
+  mkdir -p "$USAGE_DIR"
+  echo "$input" | jq -c '.rate_limits' > "$USAGE_DIR/$(basename "${CLAUDE_CONFIG_DIR:-$HOME/.claude}" | sed 's/^\.claude-//; s/^\.claude$/work/').json"
+fi
+
 # cached <key> <ttl-seconds> <cmd...>: print the last cached result immediately
 # and, once it is older than ttl, refresh it in the background. gh and docker
 # each take 0.4-1s, which would stall every statusline render if run inline.
@@ -79,26 +87,11 @@ esac
 # --- model -------------------------------------------------------------------
 parts+=("${NAME}${B}${model}${R}")
 
-# --- context window: eighth-block bar for sub-cell precision -----------------
+# --- context window ------------------------------------------------------------
 if [ -n "$ctx" ]; then
   pct=$(printf '%.0f' "$ctx")
   [ "$pct" -gt 100 ] && pct=100
-  width=10
-  eighths=$(( pct * width * 8 / 100 ))
-  full=$(( eighths / 8 ))
-  rem=$(( eighths % 8 ))
-  partial=('' '▏' '▎' '▍' '▌' '▋' '▊' '▉')
-
-  bar=''
-  for ((i = 0; i < full; i++)); do bar+='█'; done
-  if [ "$rem" -gt 0 ] && [ "$full" -lt "$width" ]; then
-    bar+="${partial[$rem]}"
-    full=$((full + 1))
-  fi
-  for ((i = full; i < width; i++)); do bar+='░'; done
-
-  c=$(heat "$pct")
-  parts+=("${c}${bar}${R} ${c}$(printf '%3d' "$pct")%${R}")
+  parts+=("${DIM}ctx${R} $(heat "$pct")${pct}%${R}")
 fi
 
 # --- git branch --------------------------------------------------------------
