@@ -20,6 +20,12 @@ link herdr/config.toml .config/herdr/config.toml
 link claude/statusline-command.sh .claude/statusline-command.sh
 link ghostty/config .config/ghostty/config
 
+# Shared Claude instructions for both accounts.
+for claude_dir in .claude .claude-personal; do
+  link claude/CLAUDE.md "$claude_dir/CLAUDE.md"
+  link claude/rules "$claude_dir/rules"
+done
+
 # Source the zsh snippets from .zshrc (zshrc itself stays machine-local).
 # colors.zsh goes last: syntax highlighting must load after everything else.
 for snippet in claude-accounts.zsh colors.zsh; do
