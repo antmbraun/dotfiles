@@ -66,11 +66,14 @@ while IFS=$'\t' read -r repo _ _ id linked; do
   res="$(call "$(jq -cn --arg id "$id" --argjson i "$i" '{id: "sort", method: "workspace.move", params: {workspace_id: $id, insert_index: $i}}')")"
   if jq -e '.error' <<<"$res" >/dev/null; then echo "Failed to move $id: $res" >&2; fi
 
-  heading=""
+  heading="" gap=""
   if [ "$repo" != "$prev" ]; then heading="── $([ "$repo" = "~" ] && echo "other" || echo "$repo") ──"; fi
+  # A blank line above every heading but the first. herdr trims spaces and drops rows whose tokens are
+  # empty, so the line holds U+2800 (blank braille), which draws nothing. Written as bytes: macOS bash 3.2 has no \u.
+  [ -n "$heading" ] && [ "$i" -gt 0 ] && gap=$'\xe2\xa0\x80'
   worktree="$([ "$linked" = true ] && echo "⎇ worktree" || true)"
   # An empty value clears the token. repo is the token this plugin used to set.
-  call "$(jq -cn --arg id "$id" --arg h "$heading" --arg w "$worktree" '{id: "tokens", method: "workspace.report_metadata", params: {workspace_id: $id, source: "user:sort-spaces", tokens: {heading: $h, worktree: $w, repo: ""}}}')" >/dev/null
+  call "$(jq -cn --arg id "$id" --arg h "$heading" --arg g "$gap" --arg w "$worktree" '{id: "tokens", method: "workspace.report_metadata", params: {workspace_id: $id, source: "user:sort-spaces", tokens: {gap: $g, heading: $h, worktree: $w, repo: ""}}}')" >/dev/null
 
   prev="$repo"
   i=$((i + 1))
