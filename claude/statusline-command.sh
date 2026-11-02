@@ -130,7 +130,9 @@ if [ -n "$cwd" ]; then
     # --- ddev: only for repos that have a DDEV project ------------------------
     top=$(g rev-parse --show-toplevel)
     if [ -f "$top/.ddev/config.yaml" ]; then
-      project=$(sed -n 's/^name:[[:space:]]*//p' "$top/.ddev/config.yaml" | head -1)
+      # config.local.yaml overrides config.yaml; with no name, DDEV uses the directory's.
+      project=$(cat "$top/.ddev/config.local.yaml" "$top/.ddev/config.yaml" 2>/dev/null | sed -n 's/^name:[[:space:]]*//p' | head -1)
+      [ -n "$project" ] || project=$(basename "$top")
       state=$(cached "ddev:$project" 30 docker ps --filter "name=^ddev-${project}-web\$" --format '{{.Status}}')
       if [ "${state:0:2}" = "Up" ]; then
         parts+=("${GREEN}●${R} ${DIM}ddev${R}")
