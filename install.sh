@@ -28,7 +28,7 @@ done
 
 # Source the zsh snippets from .zshrc (zshrc itself stays machine-local).
 # colors.zsh goes last: syntax highlighting must load after everything else.
-for snippet in claude-accounts.zsh colors.zsh; do
+for snippet in claude-accounts.zsh worktrees.zsh colors.zsh; do
   source_line="source \"$DIR/zsh/$snippet\""
   if ! grep -qF "$source_line" "$HOME/.zshrc" 2>/dev/null; then
     printf '\n%s\n' "$source_line" >>"$HOME/.zshrc"
