@@ -2,7 +2,7 @@ id = "antmbraun.sort-spaces"
 name = "Sort spaces"
 version = "0.1.0"
 min_herdr_version = "0.9.3"
-description = "Keep spaces sorted alphabetically"
+description = "Keep spaces sorted alphabetically, worktrees grouped by repo"
 platforms = ["linux", "macos"]
 
 [[startup]]
@@ -10,6 +10,10 @@ command = ["bash", "sort-spaces.sh"]
 
 [[events]]
 on = "workspace.created"
+command = ["bash", "sort-spaces.sh"]
+
+[[events]]
+on = "workspace.updated"
 command = ["bash", "sort-spaces.sh"]
 
 [[events]]

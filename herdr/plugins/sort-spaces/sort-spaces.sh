@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Sort herdr spaces (workspaces) alphabetically by label, case-insensitive.
+# Sort herdr spaces (workspaces) alphabetically, case-insensitive: worktree groups by repo name with
+# the repo's main space first, other spaces by label.
 set -euo pipefail
 export PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
 SOCK="${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}"
@@ -7,7 +8,7 @@ SOCK="${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}"
 # The CLI has no `workspace move`, so call the socket API directly.
 call() { printf '%s\n' "$1" | nc -U -w 2 "$SOCK"; }
 
-ids="$(herdr workspace list | jq -r '.result.workspaces | sort_by(.label | ascii_downcase) | .[].workspace_id')"
+ids="$(herdr workspace list | jq -r '.result.workspaces | sort_by((.worktree.repo_name // .label | ascii_downcase), (.worktree.is_linked_worktree // false), (.label | ascii_downcase)) | .[].workspace_id')"
 
 i=0
 while read -r id; do
