@@ -2,7 +2,7 @@ id = "antmbraun.sort-spaces"
 name = "Sort spaces"
 version = "0.1.0"
 min_herdr_version = "0.9.3"
-description = "Keep spaces sorted alphabetically, worktrees grouped by repo"
+description = "Keep spaces grouped by repo and sorted alphabetically"
 platforms = ["linux", "macos"]
 
 [[startup]]
