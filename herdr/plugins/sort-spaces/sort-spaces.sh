@@ -14,7 +14,19 @@ US=$'\x1f'
 # socket API directly.
 call() { printf '%s\n' "$1" | nc -U -w 2 "$SOCK"; }
 
-# Prints "<repo><US><true if a linked worktree>" for the first git repo the space's panes are in.
+# Folders a space works in, most telling first. A Claude pane's own cwd is wherever Claude was started
+# (often ~/Repos), so its session log's recent cwds come first, newest first.
+cwds_of() {
+  local panes session log
+  panes="$(herdr pane list --workspace "$1")"
+  while read -r session; do
+    log="$(find "$HOME"/.claude*/projects -maxdepth 2 -name "$session.jsonl" 2>/dev/null | head -1)"
+    [ -n "$log" ] && tail -c 500000 "$log" | grep -o '"cwd":"[^"]*"' | cut -d'"' -f4 | tail -r | awk '!seen[$0]++'
+  done < <(jq -r '.result.panes[] | select(.agent_session.agent == "claude") | .agent_session.value' <<<"$panes")
+  jq -r '[.result.panes[] | .foreground_cwd // .cwd // empty] | unique | .[]' <<<"$panes"
+}
+
+# Prints "<repo><US><true if a linked worktree>" for the first git repo the space works in.
 repo_of() {
   local cwd common gitdir
   while read -r cwd; do
@@ -22,7 +34,7 @@ repo_of() {
     gitdir="$(git -C "$cwd" rev-parse --path-format=absolute --git-dir)"
     printf '%s%s%s' "$(basename "$(dirname "$common")")" "$US" "$([ "$gitdir" != "$common" ] && echo true || echo false)"
     return
-  done < <(herdr pane list --workspace "$1" | jq -r '[.result.panes[] | .foreground_cwd // .cwd // empty] | unique | .[]')
+  done < <(cwds_of "$1")
 }
 
 rows=""
