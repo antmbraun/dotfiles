@@ -63,7 +63,7 @@ while IFS=$'\t' read -r repo _ _ id linked; do
   if jq -e '.error' <<<"$res" >/dev/null; then echo "Failed to move $id: $res" >&2; fi
 
   heading=""
-  if [ "$repo" != "$prev" ]; then heading="$([ "$repo" = "~" ] && echo "other" || echo "$repo")"; fi
+  if [ "$repo" != "$prev" ]; then heading="── $([ "$repo" = "~" ] && echo "other" || echo "$repo") ──"; fi
   worktree="$([ "$linked" = true ] && echo "⎇ worktree" || true)"
   # An empty value clears the token. repo is the token this plugin used to set.
   call "$(jq -cn --arg id "$id" --arg h "$heading" --arg w "$worktree" '{id: "tokens", method: "workspace.report_metadata", params: {workspace_id: $id, source: "user:sort-spaces", tokens: {heading: $h, worktree: $w, repo: ""}}}')" >/dev/null

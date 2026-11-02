@@ -33,7 +33,8 @@ tab_bar_right = [
 tab_bar_right_separator = " · "
 
 [ui.sidebar.spaces]
-row_gap = 1
+# Spaces pack together; the $heading divider separates the repo groups.
+row_gap = 0
 # $last_prompt is reported by ~/dotfiles/claude/hooks/herdr-last-prompt.sh on every Claude prompt.
 # The sort-spaces plugin reports $heading on the first space of each repo and $worktree on worktree spaces.
 rows = [
