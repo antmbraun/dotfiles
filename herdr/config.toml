@@ -33,27 +33,22 @@ tab_bar_right = [
 tab_bar_right_separator = " · "
 
 [ui.sidebar.spaces]
+# One space per repo (b2b, play, bkr, other), one tab per task: see `task` in ~/dotfiles/zsh/worktrees.zsh.
 row_gap = 1
-# $last_prompt is reported by ~/dotfiles/claude/hooks/herdr-last-prompt.sh on every Claude prompt.
-# The sort-spaces plugin keeps each group's spaces together and reports $group (b2b, play, bkr or other)
-# and $worktree on worktree spaces.
 rows = [
   ["state_icon", "workspace"],
-  [
-    { token = "$group", bold = true, fg = "#7aa2f7", rules = [
-      { equals = "play", fg = "#9ece6a" },
-      { equals = "bkr", fg = "#ff9e64" },
-      { equals = "other", fg = "#7a85b8", bold = false },
-    ] },
-    { token = "$worktree", fg = "#bb9af7" },
-    "branch",
-    "git_status",
-  ],
-  [{ token = "$last_prompt", dim = true }],
 ]
 
 [ui.sidebar.agents]
 row_gap = 1
+# The Agents panel is the task list: task (tab) and space, then branch, then the last prompt.
+# $branch is reported by ~/dotfiles/claude/statusline-command.sh, $last_prompt by
+# ~/dotfiles/claude/hooks/herdr-last-prompt.sh.
+rows = [
+  ["state_icon", { token = "tab", bold = true }, { token = "workspace", dim = true }],
+  [{ token = "$branch", fg = "#bb9af7" }],
+  [{ token = "$last_prompt", dim = true }],
+]
 
 [ui.toast]
 delivery = "terminal"

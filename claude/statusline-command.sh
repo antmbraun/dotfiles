@@ -126,6 +126,8 @@ if [ -n "$cwd" ]; then
     [ -n "$pr" ] && pr=" ${DIM}#${R}${BRANCH_C}${pr}${R}"
 
     parts+=("📁 ${B}${repo}${R} ${DIM}⎇ ${R}${BRANCH_C}${branch}${R}${dirty}${sync}${pr}")
+    herdr_branch="$repo ⎇ $branch"
+    [ "$(g rev-parse --path-format=absolute --git-dir)" != "$common" ] && herdr_branch+=" (worktree)"
 
     # --- ddev: only for repos that have a DDEV project ------------------------
     top=$(g rev-parse --show-toplevel)
@@ -143,6 +145,18 @@ if [ -n "$cwd" ]; then
   else
     # Not a git repo: still show where the session is.
     parts+=("📁 ${B}$(basename "$cwd")${R}")
+  fi
+fi
+
+# --- herdr: this Claude's repo and branch on its row in herdr's Agents panel -----
+# Reported only when it changes, since the status line redraws constantly.
+if [ -n "${HERDR_PANE_ID:-}" ] && command -v herdr >/dev/null; then
+  last="${XDG_STATE_HOME:-$HOME/.local/state}/herdr-branch/${HERDR_PANE_ID//:/_}"
+  if [ "${herdr_branch:-}" != "$(cat "$last" 2>/dev/null)" ]; then
+    mkdir -p "$(dirname "$last")"
+    printf '%s' "${herdr_branch:-}" >"$last"
+    # An empty value clears the token.
+    herdr pane report-metadata "$HERDR_PANE_ID" --source claude-branch --token "branch=${herdr_branch:-}" >/dev/null 2>&1 &
   fi
 fi
 

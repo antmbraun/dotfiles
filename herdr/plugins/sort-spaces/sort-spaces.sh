@@ -1,77 +1,18 @@
 #!/usr/bin/env bash
-# Sort herdr spaces (workspaces) by repo, case-insensitive. Only the repos `task` knows get a group (TASK_REPOS
-# in ~/dotfiles/zsh/worktrees.zsh); every other space goes last, under "other". Within a repo: the parent of
-# herdr's worktree group first, then worktree spaces, so herdr's group stays together, then the rest, each
-# by label. A space's group is the one `task` or `space-group` recorded for its label. Failing that, it's
-# the repo of its herdr worktree group, or else of the first git repo its panes are in (the main
-# checkout's name, so worktrees sort with their repo).
-# For the sidebar, each space gets a $group token with its group's short name from TASK_REPOS (b2b, play,
-# bkr) or "other", and spaces in a worktree get a $worktree token.
+# Sort herdr spaces (workspaces) alphabetically by label, case-insensitive, with "other" last. Spaces are
+# repos (b2b, play, bkr) and tasks are their tabs: see `task` in ~/dotfiles/zsh/worktrees.zsh.
 set -euo pipefail
 export PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
 SOCK="${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}"
-US=$'\x1f'
-SPACE_GROUPS="${XDG_STATE_HOME:-$HOME/.local/state}/herdr/space-groups.tsv"
-# TASK_REPOS as "<short> <repo> <short> <repo> ...".
-TASK_REPOS="$(sed -n 's/^typeset -gA TASK_REPOS=(\(.*\))$/\1/p' "$HOME/dotfiles/zsh/worktrees.zsh")"
-KNOWN_REPOS=" $(awk '{for (i = 2; i <= NF; i += 2) printf "%s ", $i}' <<<"$TASK_REPOS")"
-short_name() { awk -v r="$1" '{for (i = 2; i <= NF; i += 2) if ($i == r) print $(i - 1)}' <<<"$TASK_REPOS"; }
 
-# The CLI has no `workspace move`, and its report-metadata rejects its own flags in 0.9.5, so call the
-# socket API directly.
+# The CLI has no `workspace move`, so call the socket API directly.
 call() { printf '%s\n' "$1" | nc -U -w 2 "$SOCK"; }
 
-# Folders a space works in, most telling first. A Claude pane's own cwd is wherever Claude was started
-# (often ~/Repos), so its session log's recent cwds come first, newest first.
-cwds_of() {
-  local panes session log
-  panes="$(herdr pane list --workspace "$1")"
-  while read -r session; do
-    log="$(find "$HOME"/.claude*/projects -maxdepth 2 -name "$session.jsonl" 2>/dev/null | head -1)"
-    [ -n "$log" ] && tail -c 500000 "$log" | grep -o '"cwd":"[^"]*"' | cut -d'"' -f4 | tail -r | awk '!seen[$0]++'
-  done < <(jq -r '.result.panes[] | select(.agent_session.agent == "claude") | .agent_session.value' <<<"$panes")
-  jq -r '[.result.panes[] | .foreground_cwd // .cwd // empty] | unique | .[]' <<<"$panes"
-}
-
-# Prints "<repo><US><true if a linked worktree>" for the first git repo the space works in.
-repo_of() {
-  local cwd common gitdir
-  while read -r cwd; do
-    common="$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || continue
-    gitdir="$(git -C "$cwd" rev-parse --path-format=absolute --git-dir)"
-    printf '%s%s%s' "$(basename "$(dirname "$common")")" "$US" "$([ "$gitdir" != "$common" ] && echo true || echo false)"
-    return
-  done < <(cwds_of "$1")
-}
-
-rows=""
-# Fields are split on \x1f, not tabs: read merges runs of tabs, which would drop an empty group.
-while IFS="$US" read -r id label group linked; do
-  # 0: parent of herdr's worktree group, 1: a worktree, 2: anything else.
-  rank=2
-  if [ -n "$group" ]; then
-    rank="$([ "$linked" = true ] && echo 1 || echo 0)"
-  else
-    IFS="$US" read -r group linked <<<"$(repo_of "$id")" || true
-    [ "$linked" = true ] && rank=1
-  fi
-  set_group="$(awk -F'\t' -v l="$label" '$1 == l { g = $2 } END { print g }' "$SPACE_GROUPS" 2>/dev/null || true)"
-  [ -n "$set_group" ] && group="$set_group"
-  # "~" sorts after letters, so spaces outside the known repos (including "other") come last.
-  case "$KNOWN_REPOS" in *" $group "*) ;; *) group="~" ;; esac
-  rows+="$group"$'\t'"$rank"$'\t'"$label"$'\t'"$id"$'\t'"${linked:-false}"$'\n'
-done < <(herdr workspace list | jq -r '.result.workspaces[] | [.workspace_id, .label, .worktree.repo_name // "", (.worktree.is_linked_worktree // false | tostring)] | join("\u001f")')
+ids="$(herdr workspace list | jq -r '.result.workspaces | sort_by((.label == "other"), (.label | ascii_downcase)) | .[].workspace_id')"
 
 i=0
-while IFS=$'\t' read -r repo _ _ id linked; do
-  [ -n "$id" ] || continue
+while read -r id; do
   res="$(call "$(jq -cn --arg id "$id" --argjson i "$i" '{id: "sort", method: "workspace.move", params: {workspace_id: $id, insert_index: $i}}')")"
   if jq -e '.error' <<<"$res" >/dev/null; then echo "Failed to move $id: $res" >&2; fi
-
-  group="$([ "$repo" = "~" ] && echo other || short_name "$repo")"
-  worktree="$([ "$linked" = true ] && echo "⎇ worktree" || true)"
-  # An empty value clears the token. repo, heading and gap are tokens this plugin used to set.
-  call "$(jq -cn --arg id "$id" --arg g "$group" --arg w "$worktree" '{id: "tokens", method: "workspace.report_metadata", params: {workspace_id: $id, source: "user:sort-spaces", tokens: {group: $g, worktree: $w, repo: "", heading: "", gap: ""}}}')" >/dev/null
-
   i=$((i + 1))
-done < <(printf '%s' "$rows" | LC_ALL=C sort -f -t $'\t' -k1,1 -k2,2 -k3,3)
+done <<<"$ids"

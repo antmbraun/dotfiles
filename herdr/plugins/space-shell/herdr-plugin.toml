@@ -2,9 +2,9 @@ id = "antmbraun.space-shell"
 name = "Space shell"
 version = "0.1.0"
 min_herdr_version = "0.9.3"
-description = "Open a shell and a status board in every new space"
+description = "Open a shell and a status board in every new tab"
 platforms = ["linux", "macos"]
 
 [[events]]
-on = "workspace.created"
+on = "tab.created"
 command = ["bash", "space-shell.sh"]
