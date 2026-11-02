@@ -2,14 +2,16 @@
 # Sort herdr spaces (workspaces) by repo, case-insensitive. Only the repos `task` knows get a group (TASK_REPOS
 # in ~/dotfiles/zsh/worktrees.zsh); every other space goes last, under "other". Within a repo: the parent of
 # herdr's worktree group first, then worktree spaces, so herdr's group stays together, then the rest, each
-# by label. A space's repo comes from its herdr worktree group, or else from the first git repo its panes
-# are in (the main checkout's name, so worktrees sort with their repo).
+# by label. A space's group is the one `task` or `space-group` recorded for its label. Failing that, it's
+# the repo of its herdr worktree group, or else of the first git repo its panes are in (the main
+# checkout's name, so worktrees sort with their repo).
 # For the sidebar, the first space of each repo gets a $heading token with the repo's name, and spaces in a
 # worktree get a $worktree token.
 set -euo pipefail
 export PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
 SOCK="${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}"
 US=$'\x1f'
+SPACE_GROUPS="${XDG_STATE_HOME:-$HOME/.local/state}/herdr/space-groups.tsv"
 KNOWN_REPOS=" $(sed -n 's/^typeset -gA TASK_REPOS=(\(.*\))$/\1/p' "$HOME/dotfiles/zsh/worktrees.zsh" | awk '{for (i = 2; i <= NF; i += 2) printf "%s ", $i}')"
 
 # The CLI has no `workspace move`, and its report-metadata rejects its own flags in 0.9.5, so call the
@@ -50,7 +52,9 @@ while IFS="$US" read -r id label group linked; do
     IFS="$US" read -r group linked <<<"$(repo_of "$id")" || true
     [ "$linked" = true ] && rank=1
   fi
-  # "~" sorts after letters, so spaces outside the known repos come last.
+  set_group="$(awk -F'\t' -v l="$label" '$1 == l { g = $2 } END { print g }' "$SPACE_GROUPS" 2>/dev/null || true)"
+  [ -n "$set_group" ] && group="$set_group"
+  # "~" sorts after letters, so spaces outside the known repos (including "other") come last.
   case "$KNOWN_REPOS" in *" $group "*) ;; *) group="~" ;; esac
   rows+="$group"$'\t'"$rank"$'\t'"$label"$'\t'"$id"$'\t'"${linked:-false}"$'\n'
 done < <(herdr workspace list | jq -r '.result.workspaces[] | [.workspace_id, .label, .worktree.repo_name // "", (.worktree.is_linked_worktree // false | tostring)] | join("\u001f")')

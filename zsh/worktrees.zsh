@@ -3,6 +3,8 @@
 #                            new herdr space running Claude: in ~/Repos without a repo, in the repo's main
 #                            checkout with one, or in a new worktree with `wt`. A name like fix/pricing-cache
 #                            is the branch; the part after the slash names the space and folder.
+#   space-group <b2b|play|bkr|other>
+#                            set which group the current herdr space is listed under
 #   wt-new <task> [branch]   new worktree at ../<repo>-<task> on a new branch off the remote's default
 #                            branch, with DDEV started and the database copied in. Run inside a repo.
 #   wt-setup                 start DDEV in the current worktree and copy the main checkout's database in
@@ -10,6 +12,27 @@
 #   wt-done <task>           delete that worktree's DDEV project, close its space and remove it
 
 typeset -gA TASK_REPOS=(b2b mktg-web-b2b play mktg-web-playlist bkr mktg-web-booker)
+# Each space's group, by label, read by ~/dotfiles/herdr/plugins/sort-spaces/sort-spaces.sh.
+SPACE_GROUPS="${XDG_STATE_HOME:-$HOME/.local/state}/herdr/space-groups.tsv"
+
+# Records <label>'s group (a repo folder name, or "other") and re-sorts the spaces.
+_space_group_set() {
+  mkdir -p "$(dirname "$SPACE_GROUPS")"
+  { awk -F'\t' -v l="$1" '$1 != l' "$SPACE_GROUPS" 2>/dev/null; printf '%s\t%s\n' "$1" "$2"; } >"$SPACE_GROUPS.tmp"
+  mv "$SPACE_GROUPS.tmp" "$SPACE_GROUPS"
+  bash "$HOME/dotfiles/herdr/plugins/sort-spaces/sort-spaces.sh" &>/dev/null &!
+}
+
+space-group() {
+  local alias="$1"
+  if [ "$alias" != other ] && [ -z "${TASK_REPOS[$alias]}" ]; then
+    echo "usage: space-group <${(kj:|:)TASK_REPOS}|other>"
+    return 1
+  fi
+  local ws; ws="$(herdr pane current | jq -r '.result.pane.workspace_id')" || return 1
+  local label; label="$(herdr workspace get "$ws" | jq -r '.result.workspace.label')"
+  _space_group_set "$label" "${TASK_REPOS[$alias]:-other}"
+}
 
 # The main checkout, even when run from inside a worktree.
 _wt_main() { dirname "$(git ${1:+-C "$1"} rev-parse --path-format=absolute --git-common-dir)"; }
@@ -67,6 +90,7 @@ task() {
   fi
   local label="${name##*/}" main="" dir="$HOME/Repos" res ws
   [ -n "$alias" ] && main="$HOME/Repos/${TASK_REPOS[$alias]}" dir="$main"
+  _space_group_set "$label" "${TASK_REPOS[$alias]:-other}"
 
   if [ -n "$wt" ]; then
     dir="$main-$label"
