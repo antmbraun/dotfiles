@@ -5,14 +5,17 @@
 # by label. A space's group is the one `task` or `space-group` recorded for its label. Failing that, it's
 # the repo of its herdr worktree group, or else of the first git repo its panes are in (the main
 # checkout's name, so worktrees sort with their repo).
-# For the sidebar, the first space of each repo gets a $heading token with the repo's name, and spaces in a
-# worktree get a $worktree token.
+# For the sidebar, each space gets a $group token with its group's short name from TASK_REPOS (b2b, play,
+# bkr) or "other", and spaces in a worktree get a $worktree token.
 set -euo pipefail
 export PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
 SOCK="${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}"
 US=$'\x1f'
 SPACE_GROUPS="${XDG_STATE_HOME:-$HOME/.local/state}/herdr/space-groups.tsv"
-KNOWN_REPOS=" $(sed -n 's/^typeset -gA TASK_REPOS=(\(.*\))$/\1/p' "$HOME/dotfiles/zsh/worktrees.zsh" | awk '{for (i = 2; i <= NF; i += 2) printf "%s ", $i}')"
+# TASK_REPOS as "<short> <repo> <short> <repo> ...".
+TASK_REPOS="$(sed -n 's/^typeset -gA TASK_REPOS=(\(.*\))$/\1/p' "$HOME/dotfiles/zsh/worktrees.zsh")"
+KNOWN_REPOS=" $(awk '{for (i = 2; i <= NF; i += 2) printf "%s ", $i}' <<<"$TASK_REPOS")"
+short_name() { awk -v r="$1" '{for (i = 2; i <= NF; i += 2) if ($i == r) print $(i - 1)}' <<<"$TASK_REPOS"; }
 
 # The CLI has no `workspace move`, and its report-metadata rejects its own flags in 0.9.5, so call the
 # socket API directly.
@@ -60,21 +63,15 @@ while IFS="$US" read -r id label group linked; do
 done < <(herdr workspace list | jq -r '.result.workspaces[] | [.workspace_id, .label, .worktree.repo_name // "", (.worktree.is_linked_worktree // false | tostring)] | join("\u001f")')
 
 i=0
-prev=""
 while IFS=$'\t' read -r repo _ _ id linked; do
   [ -n "$id" ] || continue
   res="$(call "$(jq -cn --arg id "$id" --argjson i "$i" '{id: "sort", method: "workspace.move", params: {workspace_id: $id, insert_index: $i}}')")"
   if jq -e '.error' <<<"$res" >/dev/null; then echo "Failed to move $id: $res" >&2; fi
 
-  heading="" gap=""
-  if [ "$repo" != "$prev" ]; then heading="── $([ "$repo" = "~" ] && echo "other" || echo "$repo") ──"; fi
-  # A blank line above every heading but the first. herdr trims spaces and drops rows whose tokens are
-  # empty, so the line holds U+2800 (blank braille), which draws nothing. Written as bytes: macOS bash 3.2 has no \u.
-  [ -n "$heading" ] && [ "$i" -gt 0 ] && gap=$'\xe2\xa0\x80'
+  group="$([ "$repo" = "~" ] && echo other || short_name "$repo")"
   worktree="$([ "$linked" = true ] && echo "⎇ worktree" || true)"
-  # An empty value clears the token. repo is the token this plugin used to set.
-  call "$(jq -cn --arg id "$id" --arg h "$heading" --arg g "$gap" --arg w "$worktree" '{id: "tokens", method: "workspace.report_metadata", params: {workspace_id: $id, source: "user:sort-spaces", tokens: {gap: $g, heading: $h, worktree: $w, repo: ""}}}')" >/dev/null
+  # An empty value clears the token. repo, heading and gap are tokens this plugin used to set.
+  call "$(jq -cn --arg id "$id" --arg g "$group" --arg w "$worktree" '{id: "tokens", method: "workspace.report_metadata", params: {workspace_id: $id, source: "user:sort-spaces", tokens: {group: $g, worktree: $w, repo: "", heading: "", gap: ""}}}')" >/dev/null
 
-  prev="$repo"
   i=$((i + 1))
 done < <(printf '%s' "$rows" | LC_ALL=C sort -f -t $'\t' -k1,1 -k2,2 -k3,3)

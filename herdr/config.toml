@@ -33,15 +33,22 @@ tab_bar_right = [
 tab_bar_right_separator = " · "
 
 [ui.sidebar.spaces]
-# Spaces pack together; the $gap blank line and $heading divider separate the repo groups.
-row_gap = 0
+row_gap = 1
 # $last_prompt is reported by ~/dotfiles/claude/hooks/herdr-last-prompt.sh on every Claude prompt.
-# The sort-spaces plugin reports $gap and $heading on the first space of each repo and $worktree on worktree spaces.
+# The sort-spaces plugin keeps each group's spaces together and reports $group (b2b, play, bkr or other)
+# and $worktree on worktree spaces.
 rows = [
-  ["$gap"],
-  [{ token = "$heading", fg = "#7aa2f7", bold = true }],
   ["state_icon", "workspace"],
-  [{ token = "$worktree", fg = "#bb9af7" }, "branch", "git_status"],
+  [
+    { token = "$group", bold = true, fg = "#7aa2f7", rules = [
+      { equals = "play", fg = "#9ece6a" },
+      { equals = "bkr", fg = "#ff9e64" },
+      { equals = "other", fg = "#7a85b8", bold = false },
+    ] },
+    { token = "$worktree", fg = "#bb9af7" },
+    "branch",
+    "git_status",
+  ],
   [{ token = "$last_prompt", dim = true }],
 ]
 
