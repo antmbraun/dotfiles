@@ -34,11 +34,12 @@ tab_bar_right_separator = " · "
 
 [ui.sidebar.spaces]
 row_gap = 1
-# $last_prompt is reported by ~/dotfiles/claude/hooks/herdr-last-prompt.sh on every Claude prompt,
-# $repo by the sort-spaces plugin.
+# $last_prompt is reported by ~/dotfiles/claude/hooks/herdr-last-prompt.sh on every Claude prompt.
+# The sort-spaces plugin reports $heading on the first space of each repo and $worktree on worktree spaces.
 rows = [
+  [{ token = "$heading", fg = "#7aa2f7", bold = true }],
   ["state_icon", "workspace"],
-  [{ token = "$repo", dim = true }, "branch", "git_status"],
+  [{ token = "$worktree", fg = "#bb9af7" }, "branch", "git_status"],
   [{ token = "$last_prompt", dim = true }],
 ]
 
