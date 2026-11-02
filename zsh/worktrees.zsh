@@ -8,7 +8,7 @@
 #   wt-new <task> [branch]   new worktree at ../<repo>-<task> on a new branch off the remote's default
 #                            branch, with DDEV started and the database copied in. Run inside a repo.
 #   wt-setup                 start DDEV in the current worktree and copy the main checkout's database in
-#   wt-open <task>           open an existing worktree as a herdr space, grouped under its repo
+#   wt-open <task>           open an existing worktree as a herdr space
 #   wt-done <task>           delete that worktree's DDEV project, close its space and remove it
 
 typeset -gA TASK_REPOS=(b2b mktg-web-b2b play mktg-web-playlist bkr mktg-web-booker)
@@ -37,9 +37,12 @@ space-group() {
 # The main checkout, even when run from inside a worktree.
 _wt_main() { dirname "$(git ${1:+-C "$1"} rev-parse --path-format=absolute --git-common-dir)"; }
 
-# herdr's worktree open groups the space under the repo's main space, opening that one too if needed.
-# Prints herdr's JSON response.
-_wt_space() { herdr worktree open --cwd "$1" --path "$2" --label "$3" --focus 2>/dev/null; }
+# Opens worktree <dir> of <main> as an ordinary herdr space under its repo's group, and prints herdr's JSON
+# response. Not `herdr worktree open`: its groups are indented differently from sort-spaces' headings.
+_wt_space() {
+  _space_group_set "$3" "$(basename "$1")"
+  herdr workspace create --cwd "$2" --label "$3" --focus 2>/dev/null
+}
 
 # Adds a worktree for <main> at ../<repo>-<task> on a new <branch> off the remote's default branch.
 _wt_add() {
@@ -133,7 +136,11 @@ wt-done() {
   git -C "$main" worktree remove "$dir" || return 1
   # -d keeps branches that haven't been merged.
   [ -n "$branch" ] && git -C "$main" branch -d "$branch" 2>/dev/null
-  local space; space="$(herdr workspace list 2>/dev/null | jq -r --arg d "$dir" '.result.workspaces[]? | select(.worktree.checkout_path == $d) | .workspace_id')"
-  [ -n "$space" ] && herdr workspace close "$space" >/dev/null
   echo "Removed $dir"
+  # Close the spaces working in the worktree (the shell running this has just left it).
+  local space
+  for space in $(herdr workspace list 2>/dev/null | jq -r '.result.workspaces[]?.workspace_id'); do
+    herdr pane list --workspace "$space" | jq -e --arg d "$dir" 'any(.result.panes[]; (.cwd // "") as $c | $c == $d or ($c | startswith($d + "/")))' >/dev/null &&
+      herdr workspace close "$space" >/dev/null
+  done
 }
