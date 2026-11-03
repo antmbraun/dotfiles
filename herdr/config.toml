@@ -6,6 +6,8 @@ next_agent = "prefix+."
 previous_agent = "prefix+,"
 # Flip between the two panes you were in last, across tabs and spaces.
 last_pane = "prefix+space"
+# Search everything: spaces, tabs and agents.
+goto = ["prefix+g", "alt+/"]
 
 [keys.indexed]
 # Alt+1..9 jumps to the Nth Claude in the Agents panel (needs Ghostty's macos-option-as-alt).
