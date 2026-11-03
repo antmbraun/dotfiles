@@ -150,13 +150,15 @@ fi
 
 # --- herdr: this Claude's repo and branch on its row in herdr's Agents panel -----
 # Reported only when it changes, since the status line redraws constantly.
-if [ -n "${HERDR_PANE_ID:-}" ] && command -v herdr >/dev/null; then
-  last="${XDG_STATE_HOME:-$HOME/.local/state}/herdr-branch/${HERDR_PANE_ID//:/_}"
+if [ -n "${HERDR_PANE_ID:-}" ] && [ -n "$session" ] && command -v herdr >/dev/null; then
+  last="${XDG_STATE_HOME:-$HOME/.local/state}/herdr-branch/$session"
   if [ "${herdr_branch:-}" != "$(cat "$last" 2>/dev/null)" ]; then
     mkdir -p "$(dirname "$last")"
     printf '%s' "${herdr_branch:-}" >"$last"
-    # An empty value clears the token.
-    herdr pane report-metadata "$HERDR_PANE_ID" --source claude-branch --token "branch=${herdr_branch:-}" >/dev/null 2>&1 &
+    # Find the pane by session: a pane moved to another space gets a new id, but its Claude keeps the old
+    # HERDR_PANE_ID. An empty value clears the token.
+    (pane="$(herdr agent list | jq -r --arg s "$session" 'first(.result.agents[] | select(.agent_session.value == $s) | .pane_id) // empty')"
+      herdr pane report-metadata "${pane:-$HERDR_PANE_ID}" --source claude-branch --token "branch=${herdr_branch:-}") >/dev/null 2>&1 &
   fi
 fi
 
