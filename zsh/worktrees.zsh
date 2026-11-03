@@ -1,6 +1,6 @@
 # Tasks as herdr tabs, grouped in one space per repo, and git worktrees with their own DDEV site.
-#   task <name> [b2b|play|bkr] [wt]
-#                            new tab running Claude in the repo's space (b2b, play, bkr, or "other" without a
+#   task <name> [b2b|play|bkr|patterns] [wt]
+#                            new tab running Claude in the repo's space (b2b, play, bkr, patterns, or "other" without a
 #                            repo), creating the space if needed. It works in ~/Repos without a repo, in the
 #                            repo's main checkout with one, or in a new worktree with `wt`. A name like
 #                            fix/pricing-cache is the branch; the part after the slash names the tab and folder.
@@ -10,7 +10,7 @@
 #   wt-open <task>           open an existing worktree as a tab in its repo's space
 #   wt-done <task>           delete that worktree's DDEV project, close its tab and remove it
 
-typeset -gA TASK_REPOS=(b2b mktg-web-b2b play mktg-web-playlist bkr mktg-web-booker)
+typeset -gA TASK_REPOS=(b2b mktg-web-b2b play mktg-web-playlist bkr mktg-web-booker patterns mktg-web-patterns)
 
 # The main checkout, even when run from inside a worktree.
 _wt_main() { dirname "$(git ${1:+-C "$1"} rev-parse --path-format=absolute --git-common-dir)"; }
