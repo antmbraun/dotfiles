@@ -1,7 +1,19 @@
 onboarding = false
 
+[keys]
+# Step through the Agents panel's Claudes in its order (what needs you first).
+next_agent = "prefix+."
+previous_agent = "prefix+,"
+# Flip between the two panes you were in last, across tabs and spaces.
+last_pane = "prefix+space"
+
+[keys.indexed]
+# Alt+1..9 jumps to the Nth Claude in the Agents panel (needs Ghostty's macos-option-as-alt).
+agents = "alt"
+
+# Toggle the shell pane; "t" for terminal. (prefix+shift+l is herdr's swap-pane-right.)
 [[keys.command]]
-key = "prefix+shift+l"
+key = "prefix+t"
 type = "shell"
 command = "$HOME/dotfiles/herdr/toggle-shell.sh"
 

@@ -9,3 +9,7 @@ font-size = 14
 
 # Colors from the TokyoNight theme, matching herdr.
 theme = TokyoNight
+
+# Left Option sends Alt (herdr's Alt+1..9 agent shortcuts, Claude Code's Alt bindings); right Option
+# still types symbols and accents.
+macos-option-as-alt = left
