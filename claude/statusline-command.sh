@@ -123,11 +123,13 @@ if [ -n "$cwd" ]; then
     fi
 
     pr=$(cached "pr:$common:$branch" 300 sh -c 'cd "$1" && gh pr view --json number -q .number' _ "$cwd")
+    pr_num="$pr"
     [ -n "$pr" ] && pr=" ${DIM}#${R}${BRANCH_C}${pr}${R}"
 
     parts+=("📁 ${B}${repo}${R} ${DIM}⎇ ${R}${BRANCH_C}${branch}${R}${dirty}${sync}${pr}")
     herdr_branch="$repo ⎇ $branch"
     [ "$(g rev-parse --path-format=absolute --git-dir)" != "$common" ] && herdr_branch+=" (worktree)"
+    [ -n "$pr_num" ] && herdr_branch+=" #$pr_num"
 
     # --- ddev: only for repos that have a DDEV project ------------------------
     top=$(g rev-parse --show-toplevel)
@@ -148,7 +150,7 @@ if [ -n "$cwd" ]; then
   fi
 fi
 
-# --- herdr: this Claude's repo and branch on its row in herdr's Agents panel -----
+# --- herdr: this Claude's repo, branch and PR on its row in herdr's sidebar -------
 # Reported only when it changes, since the status line redraws constantly.
 if [ -n "${HERDR_PANE_ID:-}" ] && [ -n "$session" ] && command -v herdr >/dev/null; then
   last="${XDG_STATE_HOME:-$HOME/.local/state}/herdr-branch/$session"
@@ -158,7 +160,9 @@ if [ -n "${HERDR_PANE_ID:-}" ] && [ -n "$session" ] && command -v herdr >/dev/nu
     # Find the pane by session: a pane moved to another space gets a new id, but its Claude keeps the old
     # HERDR_PANE_ID. An empty value clears the token.
     (pane="$(herdr agent list | jq -r --arg s "$session" 'first(.result.agents[] | select(.agent_session.value == $s) | .pane_id) // empty')"
-      herdr pane report-metadata "${pane:-$HERDR_PANE_ID}" --source claude-branch --token "branch=${herdr_branch:-}") >/dev/null 2>&1 &
+      herdr pane report-metadata "${pane:-$HERDR_PANE_ID}" --source claude-branch --token "branch=${herdr_branch:-}"
+      # The task lines under each space show branches too.
+      bash "$HOME/dotfiles/herdr/plugins/space-tasks/space-tasks.sh") >/dev/null 2>&1 &
   fi
 fi
 

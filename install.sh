@@ -64,7 +64,7 @@ for claude_dir in "${claude_dirs[@]}"; do
 done
 
 if command -v herdr >/dev/null 2>&1; then
-  for plugin in sort-spaces space-shell; do
+  for plugin in sort-spaces space-shell space-tasks; do
     herdr plugin link "$DIR/herdr/plugins/$plugin" >/dev/null && echo "Linked herdr plugin $plugin"
   done
   for claude_dir in "${claude_dirs[@]}"; do
